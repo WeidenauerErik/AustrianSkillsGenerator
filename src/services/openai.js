@@ -1,5 +1,3 @@
-// openai.js – handles task generation via OpenAI Responses API
-
 const PROMPT_TEMPLATE = `You are generating a professional competition task for the AustrianSkills Web Development competition.
 
 The user will only provide a THEME for the project and optionally the number of MODULES.
@@ -23,6 +21,14 @@ GENERAL REQUIREMENTS
 * Each module should be solvable in about 3-4 hours.
 * Use modern technologies such as HTML, CSS, JavaScript, REST APIs, databases, and responsive design.
 * Use clear and professional English.
+
+MODULE DESIGN GUIDELINES
+Modules should cover areas such as:
+- Frontend design
+- Interactive JavaScript features
+- Backend API development
+- Data visualization / integration
+- Security, testing, or improvements
 
 USER STORIES
 Each module must contain 8-12 user stories.
@@ -58,10 +64,17 @@ IMPORTANT RULES
 * Points sum to ~100 total.
 * Scenario must clearly relate to the theme.`
 
-export async function generateTask(apiKey, userPrompt, moduleCount) {
+/**
+ * Generate a task using the OpenAI Responses API.
+ * @param {string} apiKey
+ * @param {string} userPrompt
+ * @param {number} modelCount
+ * @returns {Promise<object>} Parsed JSON task
+ */
+export async function generateTask(apiKey, userPrompt, modelCount) {
   const prompt = PROMPT_TEMPLATE
     .replaceAll('{{USER_PROMPT}}', userPrompt)
-    .replaceAll('{{MODEL_COUNT}}', moduleCount ?? 5)
+    .replaceAll('{{MODEL_COUNT}}', modelCount ?? 5)
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -77,7 +90,8 @@ export async function generateTask(apiKey, userPrompt, moduleCount) {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new Error(body?.error?.message ?? `HTTP ${response.status}`)
+    const msg = body?.error?.message ?? `HTTP ${response.status}`
+    throw new Error(msg)
   }
 
   const data = await response.json()

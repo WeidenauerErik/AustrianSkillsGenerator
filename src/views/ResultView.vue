@@ -25,7 +25,7 @@
         </div>
         <div class="summary-stats">
           <div class="stat">
-            <span class="stat-val">{{ totalPoints }}</span>
+            <span class="stat-val">{{ store.totalPoints }}</span>
             <span class="stat-label">Punkte</span>
           </div>
           <div class="stat-divider"></div>
@@ -41,10 +41,12 @@
         </div>
       </div>
 
-      <!-- TODO: add export buttons in next version -->
-      <div class="export-placeholder">
-        <p>Export-Funktionen kommen bald…</p>
-      </div>
+      <!-- Export panel (Word + JSON only) -->
+      <ExportPanel
+        :word-loading="wordLoading"
+        @export-word="handleWordExport"
+        @export-json="handleJsonExport"
+      />
 
       <!-- Modules overview table -->
       <div class="section">
@@ -69,7 +71,7 @@
           </div>
           <div class="table-total">
             <span class="total-label">Gesamt</span>
-            <span class="total-pts">{{ totalPoints }}</span>
+            <span class="total-pts">{{ store.totalPoints }}</span>
             <span class="col-wide"></span>
           </div>
         </div>
@@ -107,24 +109,62 @@
       </div>
 
     </div>
+
+    <!-- Toast -->
+    <Transition name="toast">
+      <div class="toast" v-if="toastMsg" :class="toastType" role="alert">
+        {{ toastMsg }}
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { exportToDocx, exportToJson } from '@/services/export'
 import AppHeader from '@/components/AppHeader.vue'
 import ModuleCard from '@/components/ModuleCard.vue'
+import ExportPanel from '@/components/ExportPanel.vue'
 import BaseButton from '@/components/BaseButton.vue'
 
 const router = useRouter()
 const store  = useAppStore()
 
-const totalPoints = computed(() => {
-  if (!store.taskData) return 0
-  return store.taskData.modulesOverview?.reduce((sum, m) => sum + m.points, 0) ?? 0
-})
+const wordLoading = ref(false)
+const toastMsg    = ref('')
+const toastType   = ref('error')
+
+let toastTimer = null
+
+function showToast(msg, type = 'error') {
+  toastMsg.value  = msg
+  toastType.value = type
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastMsg.value = '' }, 3800)
+}
+
+async function handleWordExport() {
+  wordLoading.value = true
+  try {
+    await exportToDocx(store.taskData)
+  } catch (err) {
+    showToast('Word-Export fehlgeschlagen: ' + err.message)
+  } finally {
+    wordLoading.value = false
+  }
+}
+
+function handleJsonExport() {
+  try {
+    exportToJson(store.taskData)
+  } catch (err) {
+    showToast('JSON-Export fehlgeschlagen: ' + err.message)
+  }
+}
+
+// TODO: add scoring / Excel export in next version
 
 function newTask() {
   store.clearTask()
@@ -151,21 +191,18 @@ function newTask() {
 .stat-label { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; }
 .stat-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
 
-.export-placeholder { background: var(--surface); border-radius: var(--r-lg); padding: var(--space-md); text-align: center; font-size: 13px; color: var(--text-4); border: 1.5px dashed var(--divider2); box-shadow: var(--shadow-sm); }
-
 .section { display: flex; flex-direction: column; gap: 8px; }
 .section-label { font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-4); padding-left: 2px; }
 
 .overview-table { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
 .table-header { display: grid; grid-template-columns: 90px 64px 1fr; padding: 10px var(--space-md); background: var(--bg); border-bottom: 1px solid var(--divider); }
 .table-header span { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-4); }
-.table-row { display: grid; grid-template-columns: 90px 64px 1fr; align-items: center; padding: 13px var(--space-md); border-bottom: 1px solid var(--divider); }
+.table-row { display: grid; grid-template-columns: 90px 64px 1fr; align-items: center; padding: 13px var(--space-md); border-bottom: 1px solid var(--divider); transition: background 0.12s; }
 .table-row:last-of-type { border-bottom: none; }
 .row-module { display: flex; align-items: center; gap: 8px; }
 .mod-pill { width: 28px; height: 28px; background: var(--red-soft); color: var(--red); border-radius: var(--r-sm); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .row-duration { font-size: 12px; color: var(--text-4); }
 .row-pts { font-size: 15px; font-weight: 700; color: var(--red); }
-.col-wide { }
 .row-focus { font-size: 13px; color: var(--text-2); line-height: 1.4; }
 .table-total { display: grid; grid-template-columns: 90px 64px 1fr; padding: 11px var(--space-md); background: var(--bg); border-top: 1px solid var(--divider2); }
 .total-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
@@ -177,4 +214,10 @@ function newTask() {
 
 .modules-list { display: flex; flex-direction: column; gap: 8px; }
 .bottom-action { padding-top: var(--space-sm); }
+
+.toast { position: fixed; bottom: calc(var(--sab) + 24px); left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 500; padding: 12px 18px; border-radius: var(--r-xl); display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); z-index: 300; background: #1C1C1E; }
+.toast.error { color: #ff6b6b; }
+.toast.success { color: #6BCB77; }
+.toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(8px); }
 </style>
