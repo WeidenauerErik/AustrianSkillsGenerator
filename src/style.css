@@ -1,0 +1,124 @@
+/* ── Design Tokens ── */
+:root {
+  /* Brand */
+  --red:         #C03B3B;
+  --red-hover:   #A83232;
+  --red-soft:    rgba(192, 59, 59, 0.08);
+  --red-soft2:   rgba(192, 59, 59, 0.14);
+
+  /* Neutrals */
+  --white:       #FFFFFF;
+  --bg:          #F2F2F7;
+  --bg-grouped:  #EFEFF4;
+  --surface:     #FFFFFF;
+  --surface2:    #F7F7F7;
+  --divider:     #E5E5EA;
+  --divider2:    #D1D1D6;
+
+  /* Text */
+  --text-1:      #1C1C1E;
+  --text-2:      #3A3A3C;
+  --text-3:      #636366;
+  --text-4:      #8E8E93;
+  --text-inv:    #FFFFFF;
+
+  /* Status */
+  --success:     #34A853;
+  --success-soft: rgba(52, 168, 83, 0.1);
+
+  /* Spacing */
+  --space-xs:    4px;
+  --space-sm:    8px;
+  --space-md:    16px;
+  --space-lg:    24px;
+  --space-xl:    32px;
+  --space-2xl:   48px;
+
+  /* Radius */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   20px;
+  --r-full: 9999px;
+
+  /* Shadow */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+
+  /* Font */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Safe areas (Capacitor / iOS) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-1);
+  background: var(--bg);
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ── App shell ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  position: relative;
+}
+
+/* ── Typography helpers ── */
+h1, h2, h3, h4 { font-weight: 600; line-height: 1.25; }
+
+a { color: var(--red); text-decoration: none; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--divider2); border-radius: var(--r-full); }
+
+/* ── Selection ── */
+::selection { background: var(--red-soft2); color: var(--text-1); }
+
+/* ── Page transitions ── */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(18px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-18px);
+}
