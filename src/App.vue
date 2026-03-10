@@ -1,35 +1,22 @@
 <template>
-  <div id="main">
-    <SetupView v-if="!apiKey" @key-saved="onKeySaved" />
-    <GeneratorView v-else :api-key="apiKey" @reset="apiKey = ''" />
-  </div>
+  <RouterView v-slot="{ Component }">
+    <Transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </RouterView>
 </template>
 
-<script>
-import SetupView from './views/SetupView.vue'
-import GeneratorView from './views/GeneratorView.vue'
-
-export default {
-  name: 'App',
-  components: { SetupView, GeneratorView },
-  data() {
-    return {
-      // TODO: persist this in localStorage later
-      apiKey: localStorage.getItem('apiKey') || ''
-    }
-  },
-  methods: {
-    onKeySaved(key) {
-      this.apiKey = key
-      localStorage.setItem('apiKey', key)
-    }
-  }
-}
+<script setup>
+import { RouterView } from 'vue-router'
 </script>
 
 <style>
-#main {
-  max-width: 480px;
-  margin: 0 auto;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

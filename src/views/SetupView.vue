@@ -1,71 +1,105 @@
 <template>
-  <div class="setup">
+  <div class="setup-view">
     <div class="setup-hero">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <rect width="48" height="48" rx="12" fill="#C03B3B"/>
-        <polygon points="24,9 41,39 7,39" fill="white"/>
-      </svg>
-      <h1>AustrianSkills</h1>
-      <p>Task Generator</p>
+      <div class="logo-mark">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="12" fill="#C03B3B"/>
+          <polygon points="24,9 41,39 7,39" fill="white"/>
+        </svg>
+      </div>
+      <h1 class="setup-title">AustrianSkills</h1>
+      <p class="setup-subtitle">Task Generator</p>
     </div>
 
     <div class="setup-card">
-      <h2>Willkommen</h2>
-      <p class="desc">Gib deinen OpenAI API-Schlüssel ein, um den Task Generator zu nutzen.</p>
+      <div class="card-inner">
+        <h2 class="card-heading">Willkommen</h2>
+        <p class="card-desc">
+          Gib deinen OpenAI API-Schlüssel ein, um den Task Generator zu nutzen.
+          Der Schlüssel wird sicher auf diesem Gerät gespeichert.
+        </p>
 
-      <div class="form-group">
-        <label>OpenAI API-Schlüssel</label>
-        <input
-          v-model="keyInput"
-          type="password"
-          placeholder="sk-..."
-          @keydown.enter="submit"
-        />
-        <span v-if="error" class="error-msg">{{ error }}</span>
+        <div class="form-group">
+          <label class="form-label">OpenAI API-Schlüssel</label>
+          <input
+            v-model="keyInput"
+            type="password"
+            placeholder="sk-..."
+            class="form-input"
+            :class="{ 'has-error': inputError }"
+            autocomplete="off"
+            @keydown.enter="submit"
+          />
+          <span v-if="inputError" class="error-hint">{{ inputError }}</span>
+          <span v-else class="input-hint">Einmalige Eingabe — wird lokal gespeichert</span>
+        </div>
+
+        <button
+          class="btn-primary"
+          @click="submit"
+          :disabled="!keyInput.trim() || validating"
+        >
+          {{ validating ? 'Wird geprüft...' : 'Weiter' }}
+        </button>
       </div>
-
-      <button
-        class="btn-primary"
-        @click="submit"
-        :disabled="!keyInput.trim()"
-      >
-        Weiter
-      </button>
     </div>
+
+    <p class="info-footer">
+      Der API-Schlüssel wird ausschließlich lokal auf deinem Gerät gespeichert.
+    </p>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SetupView',
-  emits: ['key-saved'],
-  data() {
-    return {
-      keyInput: '',
-      error: ''
-    }
-  },
-  methods: {
-    submit() {
-      this.error = ''
-      const key = this.keyInput.trim()
-      if (!key.startsWith('sk-')) {
-        this.error = 'Ungültiger API-Schlüssel. Schlüssel beginnen mit "sk-".'
-        return
-      }
-      // TODO: validate key against OpenAI API
-      this.$emit('key-saved', key)
-    }
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+
+const router    = useRouter()
+const store     = useAppStore()
+const keyInput  = ref('')
+const validating = ref(false)
+const inputError = ref('')
+
+async function submit() {
+  inputError.value = ''
+  const key = keyInput.value.trim()
+
+  if (!key.startsWith('sk-')) {
+    inputError.value = 'Ungültiger API-Schlüssel. Schlüssel beginnen mit "sk-".'
+    return
   }
+
+  validating.value = true
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${key}` }
+    })
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      inputError.value = body?.error?.message ?? 'Ungültiger API-Schlüssel.'
+      return
+    }
+  } catch {
+    inputError.value = 'Netzwerkfehler. Bitte Verbindung prüfen.'
+    return
+  } finally {
+    validating.value = false
+  }
+
+  store.saveApiKey(key)
+  router.replace({ name: 'Generator' })
 }
 </script>
 
 <style scoped>
-.setup {
+.setup-view {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: 32px 20px;
+  padding: calc(var(--sat) + 32px) var(--space-lg) calc(var(--sab) + 32px);
   background: var(--bg);
 }
 
@@ -73,55 +107,38 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 0 32px;
-  gap: 8px;
+  padding: var(--space-2xl) 0 var(--space-xl);
+  gap: var(--space-sm);
 }
 
-.setup-hero h1 {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text-1);
+.logo-mark {
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 12px rgba(192,59,59,0.25));
 }
 
-.setup-hero p {
-  font-size: 15px;
-  color: var(--text-3);
-}
+.setup-title { font-size: 26px; font-weight: 700; color: var(--text-1); letter-spacing: -0.4px; }
+.setup-subtitle { font-size: 15px; color: var(--text-3); }
 
 .setup-card {
   background: var(--surface);
   border-radius: var(--r-xl);
-  padding: 24px;
   box-shadow: var(--shadow-md);
+}
+
+.card-inner {
+  padding: var(--space-xl);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-lg);
 }
 
-.setup-card h2 {
-  font-size: 20px;
-  font-weight: 700;
-}
+.card-heading { font-size: 20px; font-weight: 700; color: var(--text-1); }
+.card-desc { font-size: 14px; color: var(--text-3); line-height: 1.7; margin-top: -8px; }
 
-.desc {
-  font-size: 14px;
-  color: var(--text-3);
-  line-height: 1.7;
-}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-2); padding-left: 2px; }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.form-group input {
+.form-input {
   border: 1.5px solid var(--divider);
   border-radius: var(--r-md);
   padding: 12px 14px;
@@ -130,23 +147,21 @@ export default {
   background: var(--bg);
   outline: none;
   transition: border-color 0.15s;
+  width: 100%;
 }
 
-.form-group input:focus {
-  border-color: var(--red);
-}
+.form-input:focus { border-color: var(--red); }
+.form-input.has-error { border-color: #D70015; }
 
-.error-msg {
-  font-size: 12px;
-  color: #D70015;
-}
+.error-hint { font-size: 12px; color: #D70015; padding-left: 2px; }
+.input-hint { font-size: 12px; color: var(--text-4); padding-left: 2px; }
 
 .btn-primary {
   background: var(--red);
   color: white;
   border: none;
   border-radius: var(--r-md);
-  padding: 14px;
+  padding: 15px;
   font-size: 15px;
   font-weight: 600;
   font-family: var(--font);
@@ -155,12 +170,14 @@ export default {
   transition: background 0.15s;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--red-hover);
-}
+.btn-primary:hover:not(:disabled) { background: var(--red-hover); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.info-footer {
+  font-size: 12px;
+  color: var(--text-4);
+  line-height: 1.6;
+  text-align: center;
+  padding-top: var(--space-xl);
 }
 </style>
