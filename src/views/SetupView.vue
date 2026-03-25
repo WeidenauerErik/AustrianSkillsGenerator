@@ -191,4 +191,72 @@ async function submit() {
   line-height: 1.6;
   text-align: left;
 }
+
+@media (min-width: 768px) {
+  .setup-view {
+    justify-content: center;
+    padding: calc(var(--sat) + 48px) clamp(28px, 6vw, 72px) calc(var(--sab) + 48px);
+  }
+
+  .setup-hero {
+    padding: 0 0 var(--space-2xl);
+  }
+
+  .setup-card {
+    width: min(100%, 640px);
+    margin: 0 auto;
+  }
+
+  .setup-footer {
+    width: min(100%, 640px);
+    margin: 0 auto;
+  }
+
+  .card-inner {
+    padding: 36px;
+  }
+
+  .card-heading {
+    font-size: 24px;
+  }
+
+  .card-desc {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .setup-view {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) minmax(520px, 640px);
+    align-content: center;
+    justify-content: center;
+    gap: clamp(40px, 5vw, 88px);
+    min-height: 100%;
+  }
+
+  .setup-hero {
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+  }
+
+  .setup-title {
+    font-size: 40px;
+  }
+
+  .setup-subtitle {
+    font-size: 18px;
+  }
+
+  .setup-card,
+  .setup-footer {
+    width: 100%;
+    margin: 0;
+  }
+
+  .setup-footer {
+    padding-top: var(--space-lg);
+  }
+}
 </style>

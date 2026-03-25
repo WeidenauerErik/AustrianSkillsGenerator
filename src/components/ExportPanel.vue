@@ -216,4 +216,26 @@ defineEmits(['exportWord', 'exportJson', 'exportScoring'])
   line-height: 1.55;
   padding: 0 2px;
 }
+
+@media (min-width: 1100px) {
+  .export-panel {
+    gap: 12px;
+  }
+
+  .export-list {
+    border-radius: var(--r-xl);
+  }
+
+  .export-row {
+    padding: 18px;
+  }
+
+  .export-title {
+    font-size: 16px;
+  }
+
+  .export-sub {
+    font-size: 13px;
+  }
+}
 </style>

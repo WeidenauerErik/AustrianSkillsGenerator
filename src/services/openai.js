@@ -104,3 +104,84 @@ export async function generateTask(apiKey, userPrompt, modelCount) {
     throw new Error('Ungültige Antwort vom Modell. Bitte erneut versuchen.')
   }
 }
+
+const USER_STORY_EDIT_PROMPT = `You are revising user stories for a module in an AustrianSkills Web Development competition task.
+
+Return valid JSON only. No markdown, no explanation.
+
+INPUT
+Task title: {{TASK_TITLE}}
+Task theme: {{TASK_THEME}}
+Module: {{MODULE_ID}} - {{MODULE_TITLE}}
+Module overview: {{MODULE_OVERVIEW}}
+Current user stories:
+{{CURRENT_STORIES}}
+
+Edit instruction:
+{{EDIT_PROMPT}}
+
+RULES
+- Return 8-12 user stories.
+- Keep the stories aligned with the module overview and task theme.
+- Use clear professional English.
+- Every item must follow this format exactly:
+  "As a [role], I want [function], so that [benefit]."
+- Keep the scope realistic for a competition module.
+
+OUTPUT STRUCTURE
+{
+  "userStories": ["string"]
+}`
+
+export async function rewriteUserStories(apiKey, taskData, moduleData, editPrompt) {
+  const prompt = USER_STORY_EDIT_PROMPT
+    .replaceAll('{{TASK_TITLE}}', taskData.title)
+    .replaceAll('{{TASK_THEME}}', taskData.theme)
+    .replaceAll('{{MODULE_ID}}', moduleData.module)
+    .replaceAll('{{MODULE_TITLE}}', moduleData.title)
+    .replaceAll('{{MODULE_OVERVIEW}}', moduleData.overview)
+    .replaceAll(
+      '{{CURRENT_STORIES}}',
+      moduleData.userStories.map((story, index) => `${index + 1}. ${story}`).join('\n')
+    )
+    .replaceAll('{{EDIT_PROMPT}}', editPrompt.trim())
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4.1-mini',
+      input: prompt
+    })
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    const msg = body?.error?.message ?? `HTTP ${response.status}`
+    throw new Error(msg)
+  }
+
+  const data = await response.json()
+  const raw = data?.output?.[0]?.content?.[0]?.text ?? ''
+  const cleaned = raw.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+
+  let parsed
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error('Ungültige Antwort vom Modell. Bitte erneut versuchen.')
+  }
+
+  const stories = Array.isArray(parsed?.userStories)
+    ? parsed.userStories.map((story) => String(story).trim()).filter(Boolean)
+    : []
+
+  if (stories.length === 0) {
+    throw new Error('Das Modell hat keine gültigen User Stories zurückgegeben.')
+  }
+
+  return stories
+}

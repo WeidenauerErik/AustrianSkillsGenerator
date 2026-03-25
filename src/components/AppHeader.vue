@@ -130,4 +130,20 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   justify-content: flex-end;
   align-items: center;
 }
+
+@media (min-width: 768px) {
+  .header-content {
+    height: 64px;
+    padding: 0 24px;
+  }
+
+  .header-title {
+    font-size: 18px;
+    max-width: 520px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+  }
+}
 </style>

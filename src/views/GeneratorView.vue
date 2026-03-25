@@ -15,6 +15,33 @@
 
       <!-- Form -->
       <div class="form-section">
+        <div class="import-panel">
+          <div class="import-copy">
+            <p class="import-title">Vorhandene JSON laden</p>
+            <p class="import-desc">Eine zuvor exportierte Aufgaben-Datei hochladen und direkt weiter bearbeiten.</p>
+          </div>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="application/json,.json"
+            class="file-input"
+            @change="handleImport"
+          />
+          <BaseButton
+            variant="ghost"
+            size="md"
+            @click="openFilePicker"
+            :disabled="importing"
+          >
+            {{ importing ? 'Import läuft…' : 'JSON hochladen' }}
+          </BaseButton>
+        </div>
+
+        <div class="import-copy">
+          <p class="import-title">Mithilfe von KI eine Task erstellen</p>
+          <p class="import-desc">Gib einfach einen Prompt an und der Spaß kann beginnen.</p>
+        </div>
+
         <BaseInput
           v-model="form.theme"
           label="Thema"
@@ -125,6 +152,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { generateTask } from '@/services/openai'
+import { parseImportedTask } from '@/services/taskImport'
 import AppHeader from '@/components/AppHeader.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -133,6 +161,8 @@ const router = useRouter()
 const store  = useAppStore()
 
 const showSettings = ref(false)
+const fileInput = ref(null)
+const importing = ref(false)
 
 const form = reactive({
   theme: '',
@@ -150,10 +180,35 @@ const maskedKey = computed(() => {
 function increment() { if (form.moduleCount < 8) form.moduleCount++ }
 function decrement() { if (form.moduleCount > 1) form.moduleCount-- }
 
+function openFilePicker() {
+  fileInput.value?.click()
+}
+
 function resetKey() {
   store.clearApiKey()
   showSettings.value = false
   router.replace({ name: 'Setup' })
+}
+
+async function handleImport(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+
+  if (!file) return
+
+  importing.value = true
+  store.clearError()
+
+  try {
+    const raw = await file.text()
+    const task = parseImportedTask(raw)
+    store.setTask(task)
+    router.push({ name: 'Result' })
+  } catch (err) {
+    store.setError(err.message || 'Die JSON-Datei konnte nicht importiert werden.')
+  } finally {
+    importing.value = false
+  }
 }
 
 async function generate() {
@@ -252,6 +307,37 @@ async function generate() {
   flex-direction: column;
   gap: var(--space-lg);
   box-shadow: var(--shadow-sm);
+}
+
+.import-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--divider);
+}
+
+.import-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.import-desc {
+  font-size: 13px;
+  color: var(--text-4);
+  line-height: 1.55;
+}
+
+.file-input {
+  display: none;
 }
 
 .field-group { display: flex; flex-direction: column; gap: 8px; }
@@ -418,4 +504,107 @@ async function generate() {
 .sheet-leave-to { opacity: 0; }
 .sheet-enter-from .sheet,
 .sheet-leave-to .sheet { transform: translateY(100%); }
+
+@media (min-width: 768px) {
+  .view-content {
+    width: min(100%, 820px);
+    margin: 0 auto;
+    padding: 28px;
+    gap: 20px;
+  }
+
+  .form-section {
+    padding: 28px;
+  }
+
+  .import-panel {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .import-copy {
+    max-width: 520px;
+  }
+
+  .meta-row {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .sheet-overlay {
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .sheet {
+    width: min(100%, 520px);
+    border-radius: var(--r-xl);
+    padding-bottom: var(--space-lg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sheet-handle {
+    display: none;
+  }
+}
+
+@media (min-width: 1100px) {
+  .generator-view {
+    min-height: 100%;
+  }
+
+  .view-content {
+    width: min(100%, 1180px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+    grid-template-areas:
+      "form meta"
+      "error meta"
+      "cta meta";
+    align-content: start;
+    align-items: start;
+    gap: 24px;
+    padding: 40px;
+  }
+
+  .form-section {
+    grid-area: form;
+  }
+
+  .error-banner {
+    grid-area: error;
+  }
+
+  .base-btn.full {
+    grid-area: cta;
+  }
+
+  .meta-row {
+    grid-area: meta;
+    align-self: stretch;
+    justify-content: flex-start;
+    background: var(--surface);
+    border-radius: var(--r-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .meta-dot {
+    display: none;
+  }
+
+  .meta-item {
+    font-size: 13px;
+  }
+
+  .import-panel {
+    align-items: flex-start;
+  }
+}
 </style>

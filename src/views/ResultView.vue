@@ -42,14 +42,16 @@
       </div>
 
       <!-- Export panel -->
-      <ExportPanel
-        :word-loading="wordLoading"
-        :scoring-loading="store.scoringLoading"
-        :has-scoring-cache="store.hasMarkingScheme"
-        @export-word="handleWordExport"
-        @export-json="handleJsonExport"
-        @export-scoring="handleScoringExport"
-      />
+      <div class="export-panel-wrap">
+        <ExportPanel
+          :word-loading="wordLoading"
+          :scoring-loading="store.scoringLoading"
+          :has-scoring-cache="store.hasMarkingScheme"
+          @export-word="handleWordExport"
+          @export-json="handleJsonExport"
+          @export-scoring="handleScoringExport"
+        />
+      </div>
 
       <!-- Modules Overview table -->
       <div class="section">
@@ -309,6 +311,12 @@ function newTask() {
   color: var(--text-4); padding-left: 2px;
 }
 
+.export-panel-wrap {
+  position: sticky;
+  top: calc(var(--sat) + 68px);
+  z-index: 15;
+}
+
 /* ── Overview Table ── */
 .overview-table {
   background: var(--surface);
@@ -421,4 +429,119 @@ function newTask() {
 
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(8px); }
+
+@media (min-width: 768px) {
+  .view-content {
+    width: min(100%, 1100px);
+    margin: 0 auto;
+    padding: 28px 28px calc(var(--sab) + 40px);
+    gap: 20px;
+  }
+
+  .summary-card {
+    padding: 28px;
+  }
+
+  .summary-title {
+    font-size: 24px;
+  }
+
+  .summary-theme {
+    font-size: 14px;
+  }
+
+  .summary-stats {
+    max-width: 420px;
+  }
+
+  .text-card {
+    padding: 20px;
+  }
+
+  .export-panel-wrap {
+    top: calc(var(--sat) + 84px);
+  }
+}
+
+@media (min-width: 1100px) {
+  .result-view {
+    min-height: 100%;
+  }
+
+  .view-content {
+    width: min(100%, 1320px);
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    grid-template-areas:
+      "summary summary"
+      "exports overview"
+      "exports intro"
+      "exports modules"
+      "action action";
+    align-items: start;
+    gap: 24px;
+    padding: 40px;
+  }
+
+  .view-content > :nth-child(1) {
+    grid-area: summary;
+  }
+
+  .view-content > :nth-child(2) {
+    grid-area: exports;
+  }
+
+  .export-panel-wrap {
+    grid-area: exports;
+    align-self: start;
+    top: calc(var(--sat) + 100px);
+  }
+
+  .view-content > :nth-child(3) {
+    grid-area: overview;
+  }
+
+  .view-content > :nth-child(4) {
+    grid-area: intro;
+  }
+
+  .view-content > :nth-child(5) {
+    grid-area: modules;
+  }
+
+  .view-content > :nth-child(6) {
+    grid-area: action;
+  }
+
+  .summary-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: end;
+  }
+
+  .summary-stats {
+    max-width: none;
+  }
+
+  .section {
+    gap: 12px;
+  }
+
+  .modules-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .bottom-action {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .bottom-action :deep(.base-btn) {
+    width: auto;
+    min-width: 260px;
+  }
+}
 </style>

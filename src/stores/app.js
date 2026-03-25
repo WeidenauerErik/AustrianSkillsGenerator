@@ -38,6 +38,17 @@ export const useAppStore = defineStore('app', () => {
     error.value = ''
   }
 
+  function updateModuleUserStories(moduleId, userStories) {
+    if (!taskData.value?.modules) return
+
+    const module = taskData.value.modules.find((entry) => entry.module === moduleId)
+    if (!module) return
+
+    module.userStories = [...userStories]
+    markingSchemeData.value = null
+    error.value = ''
+  }
+
   function clearTask() {
     taskData.value = null
     markingSchemeData.value = null
@@ -64,6 +75,7 @@ export const useAppStore = defineStore('app', () => {
     // actions
     saveApiKey, clearApiKey,
     setTask, clearTask,
+    updateModuleUserStories,
     setMarkingScheme,
     setError, clearError
   }
