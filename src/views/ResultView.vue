@@ -528,12 +528,6 @@ function newTask() {
     gap: 12px;
   }
 
-  .modules-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-
   .bottom-action {
     display: flex;
     justify-content: flex-end;
